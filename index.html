@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לידאס — מערכת ניהול סוכנות</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23c8a45a'/><text y='72' x='50' text-anchor='middle' font-size='60' fill='%230d1821' font-family='serif' font-weight='bold'>ל</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a1520;--bg2:#111e2e;--bg3:#172438;--bg4:#1c2d44;
+  --gold:#c8a45a;--gold2:#e4c47c;--gold3:#f5d898;
+  --gdim:rgba(200,164,90,0.10);--gdim2:rgba(200,164,90,0.05);
+  --green:#3ecf8e;--green2:rgba(62,207,142,0.12);
+  --red:#f56565;--red2:rgba(245,101,101,0.12);
+  --blue:#63b3ed;--blue2:rgba(99,179,237,0.12);
+  --amber:#f6ad55;--amber2:rgba(246,173,85,0.12);
+  --text:#eae6df;--t2:#a8b8c8;--t3:#5a7090;
+  --bdr:rgba(200,164,90,0.15);--bdr2:rgba(255,255,255,0.05);
+  --sidebar:220px;--topbar:58px;--r:10px;--rl:14px;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;display:flex}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 50% at 5% 5%,rgba(200,164,90,0.04) 0%,transparent 55%),
+             radial-gradient(ellipse 50% 60% at 95% 95%,rgba(99,179,237,0.03) 0%,transparent 55%)}
+
+/* ── LOGIN SCREEN ── */
+.login-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;transition:opacity .5s}
+.login-screen.gone{opacity:0;pointer-events:none}
+.login-bg{position:absolute;inset:0;background:
+  radial-gradient(ellipse 80% 60% at 20% 20%,rgba(200,164,90,0.06) 0%,transparent 55%),
+  radial-gradient(ellipse 60% 60% at 80% 80%,rgba(99,179,237,0.04) 0%,transparent 55%);
+  pointer-events:none}
+.login-box{position:relative;background:var(--bg3);border:1px solid var(--bdr);border-radius:20px;padding:44px 40px 36px;width:400px;text-align:center;box-shadow:0 40px 100px rgba(0,0,0,.6);animation:popIn .5s cubic-bezier(.34,1.3,.64,1)}
+@keyframes popIn{from{opacity:0;transform:scale(.88) translateY(24px)}to{opacity:1;transform:none}}
+.login-logo{width:60px;height:60px;border-radius:16px;background:var(--gold);display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:var(--bg);margin-bottom:20px;font-family:serif;box-shadow:0 8px 24px rgba(200,164,90,0.3)}
+.login-title{font-size:24px;font-weight:700;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--t3);margin-bottom:32px}
+.login-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);display:block;text-align:right;margin-bottom:6px}
+.login-input-wrap{position:relative;margin-bottom:20px}
+.login-input{width:100%;padding:12px 44px 12px 14px;font-size:15px;font-family:'Heebo',sans-serif;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:10px;color:var(--text);text-align:center;letter-spacing:.1em;transition:border .2s,box-shadow .2s}
+.login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,90,0.12)}
+.eye-btn{position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;transition:color .2s}
+.eye-btn:hover{color:var(--text)}
+.login-btn{width:100%;padding:13px;font-size:15px;font-weight:700;font-family:'Heebo',sans-serif;background:var(--gold);color:var(--bg);border:none;border-radius:10px;cursor:pointer;transition:all .2s;margin-top:4px}
+.login-btn:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(200,164,90,0.3)}
+.login-btn:active{transform:none}
+.login-btn:disabled{opacity:.6;transform:none;cursor:wait}
+.login-err{font-size:12px;color:var(--red);margin-top:10px;min-height:18px;transition:opacity .2s}
+.login-footer{margin-top:20px;font-size:11px;color:var(--t3)}
+.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:none}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.loading-dots{display:inline-flex;gap:5px;align-items:center;justify-content:center}
+.loading-dots span{width:6px;height:6px;border-radius:50%;background:var(--bg);animation:dot .8s infinite}
+.loading-dots span:nth-child(2){animation-delay:.15s}
+.loading-dots span:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);height:100vh;background:var(--bg2);border-left:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;position:fixed;right:0;top:0;z-index:100;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.sidebar.closed{transform:translateX(100%)}
+.sbrand{padding:18px 16px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bdr)}
+.sbrand-logo{width:34px;height:34px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--bg);font-family:serif;flex-shrink:0}
+.sbrand-name{font-size:14px;font-weight:700;line-height:1.2}
+.sbrand-sub{font-size:10px;color:var(--t3);margin-top:1px}
+.snav{flex:1;overflow-y:auto;padding:10px 8px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
+.snav-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);padding:8px 8px 4px}
+.snav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--t2);cursor:pointer;transition:all .15s;border-right:2px solid transparent;margin-bottom:1px;user-select:none}
+.snav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.6;transition:opacity .15s}
+.snav-item:hover{background:var(--gdim2);color:var(--text)}
+.snav-item.active{background:var(--gdim);color:var(--gold);border-right-color:var(--gold)}
+.snav-item.active svg{opacity:1}
+.sfooter{padding:10px 8px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:6px}
+.btn-refresh{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:8px 10px;border-radius:8px;font-size:12px;font-family:'Heebo',sans-serif;font-weight:600;background:var(--gdim);color:var(--gold);border:1px solid var(--bdr);cursor:pointer;transition:all .15s}
+.btn-refresh:hover{background:rgba(200,164,90,.18)}
+.btn-logout{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:7px 10px;border-radius:8px;font-size:11px;font-family:'Heebo',sans-serif;color:var(--t3);background:transparent;border:1px solid var(--bdr2);cursor:pointer;transition:all .15s}
+.btn-logout:hover{color:var(--red);border-color:rgba(245,101,101,.3)}
+
+/* ── MAIN ── */
+.main{flex:1;margin-right:var(--sidebar);height:100vh;display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:1;transition:margin .3s}
+.main.full{margin-right:0}
+.topbar{height:var(--topbar);background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 22px;flex-shrink:0;gap:12px}
+.tb-left{display:flex;align-items:center;gap:12px}
+.hamburger{background:none;border:none;color:var(--t2);cursor:pointer;padding:6px;border-radius:7px;display:flex;transition:color .15s}
+.hamburger:hover{color:var(--text);background:var(--gdim2)}
+.page-title{font-size:16px;font-weight:600}
+.tb-right{display:flex;align-items:center;gap:10px}
+.conn-status{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:5px}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);transition:background .3s}
+.conn-dot.live{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.btn-report{padding:7px 16px;font-size:12px;font-weight:700;font-family:'Heebo',sans-serif;background:var(--gold);color:var(--bg);border:none;border-radius:100px;cursor:pointer;transition:all .2s}
+.btn-report:hover{background:var(--gold2);box-shadow:0 4px 16px rgba(200,164,90,.3)}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:22px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
+.page-wrap{animation:pageIn .3s ease both}
+@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kpi{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--rl);padding:18px 16px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.3);border-color:rgba(200,164,90,.3)}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:72px;height:72px;border-radius:0 var(--rl) 0 72px;background:var(--gdim2)}
+.kpi-lbl{font-size:11px;color:var(--t3);margin-bottom:7px}
+.kpi-val{font-size:26px;font-weight:700;line-height:1;margin-bottom:5px}
+.kv-gold{color:var(--gold)}.kv-green{color:var(--green)}.kv-red{color:var(--red)}.kv-blue{color:var(--blue)}
+.kpi-sub{font-size:11px;color:var(--t3)}
+.kpi-sub.up{color:var(--green)}.kpi-sub.dn{color:var(--red)}
+
+/* ── CARD ── */
+.sec{font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.sec::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.card{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
+.card-h{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-h h3{font-size:13px;font-weight:600}
+.chip{font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--gdim);color:var(--gold);border:1px solid var(--bdr);white-space:nowrap}
+.chip.g{background:var(--green2);color:var(--green);border-color:rgba(62,207,142,.2)}
+.chip.r{background:var(--red2);color:var(--red);border-color:rgba(245,101,101,.2)}
+.chip.b{background:var(--blue2);color:var(--blue);border-color:rgba(99,179,237,.2)}
+
+/* ── TABLE ── */
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{padding:9px 14px;text-align:right;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bdr);background:rgba(10,21,32,.5);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid rgba(200,164,90,.05);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(200,164,90,.04)}
+.tn{font-weight:500;color:var(--text);white-space:nowrap}
+.ta{font-weight:600;color:var(--gold);white-space:nowrap}
+.tm{color:var(--t3);font-size:11px;white-space:nowrap}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap}
+.bg{background:var(--green2);color:var(--green)}
+.br{background:var(--red2);color:var(--red)}
+.bo{background:var(--gdim);color:var(--gold)}
+.bb{background:var(--blue2);color:var(--blue)}
+.bx{background:rgba(90,112,144,.15);color:var(--t3)}
+.bam{background:var(--amber2);color:var(--amber)}
+
+/* ── MISC ── */
+.prog-w{display:flex;align-items:center;gap:8px}
+.prog{flex:1;min-width:50px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;transition:width .6s ease}
+.pfg{background:var(--green)}.pfr{background:var(--red)}.pfo{background:var(--gold)}
+.pp{font-size:11px;color:var(--t3);min-width:32px;text-align:left}
+.two-col{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:20px}
+.bchart{padding:14px 18px 12px;display:flex;align-items:flex-end;gap:12px;height:160px}
+.bc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.bc-v{font-size:10px;font-weight:600;color:var(--gold2)}
+.bc-bar{width:100%;border-radius:4px 4px 0 0;transition:height .7s cubic-bezier(.34,1.2,.64,1)}
+.bc-l{font-size:10px;color:var(--t3)}
+.wcards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
+.wcard{background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r);padding:14px;transition:border-color .2s}
+.wcard:hover{border-color:var(--bdr)}
+.wav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-bottom:9px}
+.wn{font-size:13px;font-weight:600;margin-bottom:2px}
+.wr{font-size:10px;color:var(--t3);margin-bottom:9px}
+.ws{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.ws span:first-child{color:var(--t3)}
+.insights{background:var(--gdim);border:1px solid var(--bdr);border-radius:var(--rl);padding:20px 22px;margin-bottom:20px}
+.insights h3{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:10px}
+.insights p{font-size:13px;line-height:1.8;color:var(--t2)}
+.insights p strong{color:var(--text)}
+.report-hero{margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:flex-start}
+.rh-l h1{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.rh-l h2{font-size:30px;font-weight:700;line-height:1.1}
+.rh-l h2 span{color:var(--gold)}
+.rh-l p{font-size:12px;color:var(--t3);margin-top:6px}
+.pbtn{display:inline-flex;align-items:center;gap:6px;background:var(--gdim);border:1px solid var(--bdr);border-radius:100px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--gold);cursor:pointer;font-family:'Heebo',sans-serif;transition:background .2s}
+.pbtn:hover{background:rgba(200,164,90,.2)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);border:1px solid var(--bdr);border-radius:100px;padding:10px 20px;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(62,207,142,.3);color:var(--green)}
+.toast.err{border-color:rgba(245,101,101,.3);color:var(--red)}
+.empty{text-align:center;padding:36px;color:var(--t3);font-size:13px}
+.empty strong{display:block;font-size:15px;color:var(--t2);margin-bottom:6px}
+.fbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fbar input,.fbar select{padding:6px 11px;font-size:12px;font-family:'Heebo',sans-serif;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--text);transition:border .2s}
+.fbar input:focus,.fbar select:focus{outline:none;border-color:var(--gold)}
+.fbar select option{background:var(--bg2)}
+.stat-chip{display:inline-flex;align-items:center;background:var(--bg3);border:1px solid var(--bdr2);border-radius:100px;padding:4px 10px;font-size:11px;color:var(--t3);white-space:nowrap}
+.loading-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,21,32,.85);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .3s}
+.loading-overlay.show{opacity:1;pointer-events:auto}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--bdr);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{font-size:13px;color:var(--t2)}
+@media(max-width:960px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.wcards{grid-template-columns:repeat(2,1fr)}}
+@media print{.sidebar,.topbar,.fbar,.pbtn,.btn-logout,.btn-refresh{display:none!important}.main{margin-right:0!important}body{background:#fff;color:#111;overflow:visible}.content{overflow:visible}:root{--bg:#fff;--bg2:#f8f7f5;--bg3:#f3f2f0;--text:#111;--t2:#444;--t3:#777;--bdr:#ddd;--bdr2:#eee;--gold:#8a620e;--green:#1a6040;--red:#8b2020}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-box">
+    <div class="login-logo">ל</div>
+    <div class="login-title">לידאס</div>
+    <div class="login-sub">מערכת ניהול פנימית — הנהלה בלבד</div>
+    <label class="login-label">סיסמה</label>
+    <div class="login-input-wrap">
+      <input id="pass-input" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="eye-btn" onclick="toggleEye()" id="eye-btn">
+        <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">כניסה למערכת</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-footer">לידאס סוכנות דיגיטל · גישה מורשית בלבד</div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-msg" id="loading-msg">שואב נתונים מאירטייבל...</div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar closed" id="sidebar">
+  <div class="sbrand">
+    <div class="sbrand-logo">ל</div>
+    <div>
+      <div class="sbrand-name">לידאס</div>
+      <div class="sbrand-sub" id="conn-lbl">מחובר</div>
+    </div>
+  </div>
+  <div class="snav">
+    <div class="snav-lbl">ראשי</div>
+    <div class="snav-item active" data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>דשבורד
+    </div>
+    <div class="snav-item" data-page="retainers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>רטיינרים
+    </div>
+    <div class="snav-item" data-page="clients">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>לקוחות
+    </div>
+    <div class="snav-item" data-page="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>פרויקטים
+    </div>
+    <div class="snav-lbl" style="margin-top:14px">כספים</div>
+    <div class="snav-item" data-page="revenue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>הכנסות
+    </div>
+    <div class="snav-item" data-page="invoices">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>חשבוניות
+    </div>
+    <div class="snav-item" data-page="salaries">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>שכר עובדים
+    </div>
+    <div class="snav-lbl" style="margin-top:14px">צוות</div>
+    <div class="snav-item" data-page="team">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>ניהול צוות
+    </div>
+    <div class="snav-item" data-page="profitability">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>רווחיות
+    </div>
+    <div class="snav-item" data-page="report">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>דוח מנהלים
+    </div>
+  </div>
+  <div class="sfooter">
+    <button class="btn-refresh" onclick="refreshData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      רענן נתונים
+    </button>
+    <button class="btn-logout" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      יציאה
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main full" id="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="hamburger" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="page-title" id="ptitle">דשבורד</span>
+    </div>
+    <div class="tb-right">
+      <div class="conn-status"><div class="conn-dot live" id="cdot"></div><span id="clbl">מחובר לאירטייבל</span></div>
+      <button class="btn-report" onclick="nav('report')">↗ דוח מנהלים</button>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — credentials baked in
+// ══════════════════════════════════════════
+const CFG = {
+  pass: 'ךקשגוד4852',
+  pat:  window.__AT_PAT__ || '',
+  base: 'apph2BTZHTVV7Opar'
+};
+const TABLES = {
+  retainers:'tblws7owlvdJs0W0c', workers:'tblJ7GGA3BBhIavnH',
+  salaries:'tblWcfYCuzWetROcx',  clients:'tbl3Q6fMu4qhjh49K',
+  projects:'tblF9jYDXiALIOPTx',  invoices:'tbl1Ucq2scysPa8ak'
+};
+const PAGE_TITLES = {dashboard:'דשבורד',retainers:'רטיינרים',clients:'לקוחות',projects:'פרויקטים',revenue:'הכנסות',invoices:'חשבוניות',salaries:'שכר עובדים',team:'ניהול צוות',profitability:'רווחיות',report:'דוח מנהלים'};
+const AV_COLORS = ['#4a90d9','#3ecf8e','#c8a45a','#f56565','#a78bfa','#38b2ac','#ed8936','#3182ce'];
+
+const S = { loggedIn:false, data:{ retainers:[], workers:[], salaries:[], clients:[], projects:[], invoices:[] } };
+let currentPage = 'dashboard';
+
+// ── HELPERS ──
+const fmt = n => n ? '₪'+Math.round(n).toLocaleString('he-IL') : '—';
+const fmtK = n => n>=1000 ? '₪'+Math.round(n/1000)+'K' : fmt(n);
+const arr = v => Array.isArray(v)?v:(v?[v]:[]);
+const fld = (r,k) => r?.fields?.[k] ?? r?.[k];
+const cleanName = s => (s||'').replace(/^ריטיינר\s*\|\|\s*/,'').trim();
+function isActive(r){ const s=r.status||''; return s.includes('פעיל')||s.toLowerCase().includes('active'); }
+function retTotal(r){ return r.total||(r.sm+r.ppc+r.gr); }
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type}`;
+  setTimeout(()=>t.className='toast',3000);
+}
+function showLoading(msg='שואב נתונים...'){
+  document.getElementById('loading-msg').textContent=msg;
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading(){ document.getElementById('loading-overlay').classList.remove('show'); }
+
+// ── LOGIN ──
+function toggleEye(){
+  const inp=document.getElementById('pass-input');
+  const ico=document.getElementById('eye-icon');
+  const isPass=inp.type==='password';
+  inp.type=isPass?'text':'password';
+  ico.innerHTML=isPass
+    ?'<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    :'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+async function doLogin(){
+  const pass = document.getElementById('pass-input').value;
+  const btn  = document.getElementById('login-btn');
+  const err  = document.getElementById('login-err');
+  err.textContent='';
+  if(!pass){ err.textContent='הכנס סיסמה'; return; }
+  if(pass !== CFG.pass){
+    err.textContent='סיסמה שגויה — נסה שוב';
+    document.getElementById('login-box')||document.querySelector('.login-box').classList.add('shake');
+    setTimeout(()=>document.querySelector('.login-box').classList.remove('shake'),400);
+    return;
+  }
+  btn.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div>';
+  btn.disabled=true;
+  S.loggedIn=true;
+  sessionStorage.setItem('l_auth','1');
+  // Hide login, show app
+  document.getElementById('login-screen').classList.add('gone');
+  document.getElementById('sidebar').classList.remove('closed');
+  document.getElementById('main').classList.remove('full');
+  render();
+  await loadAll();
+}
+
+function doLogout(){
+  sessionStorage.removeItem('l_auth');
+  S.loggedIn=false;
+  S.data={ retainers:[], workers:[], salaries:[], clients:[], projects:[], invoices:[] };
+  document.getElementById('login-screen').classList.remove('gone');
+  document.getElementById('sidebar').classList.add('closed');
+  document.getElementById('main').classList.add('full');
+  document.getElementById('pass-input').value='';
+  document.getElementById('login-btn').textContent='כניסה למערכת';
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-err').textContent='';
+}
+
+// ── AIRTABLE ──
+async function atFetch(tableId, fields=[]){
+  let all=[],offset=null;
+  do{
+    const p=new URLSearchParams({table:tableId,pageSize:100});
+    fields.forEach(f=>p.append('fields[]',f));
+    if(offset) p.set('offset',offset);
+    const r=await fetch(`/api/airtable?${p}`);
+    if(!r.ok) return null;
+    const d=await r.json();
+    all=[...all,...(d.records||[])];
+    offset=d.offset||null;
+  } while(offset);
+  return all;
+}
+
+async function loadAll(){
+  showLoading('שואב נתונים מאירטייבל...');
+  try{
+    const [rets,workers,sals,clients,projects,invoices]=await Promise.all([
+      atFetch(TABLES.retainers,['fldA0xhAi9jR41Lrl','fldr3uehCN59rrWMC','fldU9GNJwTHGhDzYc','fldZ5ZWugLNuRwgyU','fldepoEwb5TJzBLwL','fldAdD1LBYzg1VXwB','fldpnGPCU4W9dXny9','fldXwDDsRxQnXeGCX','fldGhOxRqdc9eFxud','fldaqZHAajsSxbhgO']),
+      atFetch(TABLES.workers,['fldBnDNHeyGHd8ajf','fldxddElwPRHeVdjF','fld2AOmfUFBFD6vSc','fldRKUNlzrSQCh4qt','fld9ExZWatPcF9KaF','fldpvHrmn1RNsNoKd','fldVdqwFKzYmn1nWM']),
+      atFetch(TABLES.salaries,['fldP4cUHg39WPTC3g','fldIudSqkB8D8RTI0','fldKZgezsrt2HepWj','fldCH0c0TktgXFLhG','fld1PIbHsdJof4z9K']),
+      atFetch(TABLES.clients,['fldSoIheF9ekQnTMP','fldGxKjQvt9cD8YGD','fldQC1PQpEjuijJ8k','fldFwrY8GLgBXi6c1','fldBYlRsz6uizbynT']),
+      atFetch(TABLES.projects,['fld9gbnKWuLtzSrvJ','fldtWtD1JEjurmAiW','fld05WashWY3dohkA','fldmUUFiHapkuRiIa','fldAYaDtkgxS8x4fQ','flddVr1piiDfr7Fvg']),
+      atFetch(TABLES.invoices,['fldIcjFJi8eGZyDcK','fldTEBMLmODVNj3Gs','fldvbzHDEgqp4eXR9','fldJB76UPa1NP7UxJ','fldE2NvHXHnGAcuK1','fldHmMXrV9WDaKVU0']),
+    ]);
+    if(rets)    S.data.retainers=normalizeRets(rets);
+    if(workers) S.data.workers=normalizeWorkers(workers);
+    if(sals)    S.data.salaries=normalizeSals(sals);
+    if(clients) S.data.clients=clients;
+    if(projects) S.data.projects=projects;
+    if(invoices) S.data.invoices=invoices;
+    document.getElementById('cdot').className='conn-dot live';
+    document.getElementById('clbl').textContent=`${S.data.retainers.length} רטיינרים · עדכני`;
+    document.getElementById('conn-lbl').textContent='מחובר לאירטייבל ✓';
+    toast('✓ נתונים נטענו בהצלחה','ok');
+    render();
+  } catch(e){
+    toast('שגיאה בטעינת נתונים','err');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function refreshData(){ await loadAll(); }
+
+// ── NORMALIZERS ──
+function normalizeRets(recs){
+  return recs.map(r=>({
+    id:r.id,
+    name:cleanName(fld(r,'fldA0xhAi9jR41Lrl')||'—'),
+    status:(fld(r,'fldr3uehCN59rrWMC')||{}).name||'פעיל',
+    types:arr(fld(r,'fldU9GNJwTHGhDzYc')).map(x=>typeof x==='object'?x.name:x),
+    sm:parseFloat(fld(r,'fldZ5ZWugLNuRwgyU'))||0,
+    ppc:parseFloat(fld(r,'fldepoEwb5TJzBLwL'))||0,
+    gr:parseFloat(fld(r,'fldAdD1LBYzg1VXwB'))||0,
+    total:parseFloat(fld(r,'fldpnGPCU4W9dXny9'))||0,
+    join:fld(r,'fldXwDDsRxQnXeGCX')||null,
+    end:fld(r,'fldGhOxRqdc9eFxud')||null,
+    reason:(fld(r,'fldaqZHAajsSxbhgO')||{}).name||null,
+  }));
+}
+function normalizeWorkers(recs){
+  return recs.map(r=>({
+    id:r.id,
+    name:fld(r,'fldBnDNHeyGHd8ajf')||'—',
+    role:arr(fld(r,'fldxddElwPRHeVdjF')).map(x=>typeof x==='object'?x.name:x).join(', '),
+    dept:arr(fld(r,'fld2AOmfUFBFD6vSc')).map(x=>typeof x==='object'?x.name:x).join(', '),
+    ppc:parseFloat(fld(r,'fldRKUNlzrSQCh4qt'))||0,
+    sm:parseFloat(fld(r,'fld9ExZWatPcF9KaF'))||0,
+    all:parseFloat(fld(r,'fldpvHrmn1RNsNoKd'))||0,
+    status:(fld(r,'fldVdqwFKzYmn1nWM')||{}).name||'—',
+  }));
+}
+function normalizeSals(recs){
+  return recs.map(r=>({
+    worker:fld(r,'fldP4cUHg39WPTC3g')||'—',
+    month:fld(r,'fldIudSqkB8D8RTI0')||'—',
+    hourly:parseFloat(fld(r,'fldKZgezsrt2HepWj'))||0,
+    bonus:parseFloat(fld(r,'fldCH0c0TktgXFLhG'))||0,
+    net:parseFloat(fld(r,'fld1PIbHsdJof4z9K'))||0,
+  }));
+}
+
+// ── NAVIGATION ──
+function nav(page){
+  currentPage=page;
+  document.querySelectorAll('.snav-item').forEach(i=>i.classList.remove('active'));
+  const el=document.querySelector(`.snav-item[data-page="${page}"]`);
+  if(el) el.classList.add('active');
+  document.getElementById('ptitle').textContent=PAGE_TITLES[page]||page;
+  render();
+}
+document.querySelectorAll('.snav-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.page)));
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('closed');
+  document.getElementById('main').classList.toggle('full');
+}
+
+// ── RENDER ──
+function render(){
+  const fns={dashboard:pgDashboard,retainers:pgRetainers,clients:pgClients,projects:pgProjects,revenue:pgRevenue,invoices:pgInvoices,salaries:pgSalaries,team:pgTeam,profitability:pgProfitability,report:pgReport};
+  const c=document.getElementById('content');
+  c.innerHTML='<div class="page-wrap" id="pw"></div>';
+  (fns[currentPage]||pgDashboard)(document.getElementById('pw'));
+}
+
+// ── PAGES ──
+function pgDashboard(pw){
+  const rets=S.data.retainers;
+  const active=rets.filter(isActive);
+  const total=active.reduce((s,r)=>s+retTotal(r),0);
+  const sm=active.reduce((s,r)=>s+r.sm,0);
+  const ppc=active.reduce((s,r)=>s+r.ppc,0);
+  const gr=active.reduce((s,r)=>s+r.gr,0);
+  const avg=active.length?Math.round(total/active.length):0;
+  const churned=rets.filter(r=>!isActive(r));
+  const top8=[...active].sort((a,b)=>retTotal(b)-retTotal(a)).slice(0,8);
+  const maxB=Math.max(ppc,sm,gr,1);
+  const bh=v=>Math.max(4,Math.round(v/maxB*120));
+  pw.innerHTML=`
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">סה"כ רטיינרים חודשי</div><div class="kpi-val kv-gold">${fmt(total)}</div><div class="kpi-sub">PPC ${fmt(ppc)} · SM ${fmt(sm)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">לקוחות פעילים</div><div class="kpi-val kv-green">${active.length}</div><div class="kpi-sub up">מתוך ${rets.length} רשומות</div></div>
+    <div class="kpi"><div class="kpi-lbl">ממוצע רטיינר</div><div class="kpi-val">${fmt(avg)}</div><div class="kpi-sub">לחודש ללקוח</div></div>
+    <div class="kpi"><div class="kpi-lbl">עזבו / הסתיימו</div><div class="kpi-val kv-red">${churned.length}</div><div class="kpi-sub dn">רטיינרים שהסתיימו</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-h"><h3>הכנסות לפי סוג</h3><span class="chip">יוני 2026</span></div>
+      <div class="bchart">
+        <div class="bc-col"><div class="bc-v">${fmtK(ppc)}</div><div class="bc-bar" style="height:${bh(ppc)}px;background:#3ecf8e"></div><div class="bc-l">PPC</div></div>
+        <div class="bc-col"><div class="bc-v">${fmtK(sm)}</div><div class="bc-bar" style="height:${bh(sm)}px;background:#63b3ed"></div><div class="bc-l">SM</div></div>
+        ${gr?`<div class="bc-col"><div class="bc-v">${fmtK(gr)}</div><div class="bc-bar" style="height:${bh(gr)}px;background:#c8a45a"></div><div class="bc-l">גרפיקה</div></div>`:''}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>סיכום פיננסי</h3></div>
+      <table><tbody>
+        <tr><td>הכנסות PPC</td><td style="text-align:left" class="ta">${fmt(ppc)}</td></tr>
+        <tr><td>הכנסות SM</td><td style="text-align:left" class="ta">${fmt(sm)}</td></tr>
+        ${gr?`<tr><td>גרפיקה</td><td style="text-align:left;font-weight:500">${fmt(gr)}</td></tr>`:''}
+        <tr style="background:var(--gdim)"><td style="font-weight:700;color:var(--gold)">סה"כ חודשי</td><td style="text-align:left;font-weight:700;color:var(--gold)">${fmt(total)}</td></tr>
+        <tr><td class="tm">לקוחות פעילים</td><td style="text-align:left;font-weight:500">${active.length}</td></tr>
+        <tr><td class="tm">הסתיימו</td><td style="text-align:left"><span class="badge br">${churned.length}</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div class="sec">לקוחות מובילים</div>
+  <div class="card">
+    <div class="card-h"><h3>Top 8 — לפי גובה רטיינר</h3><span class="chip">${top8.length} לקוחות</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>לקוח</th><th>SM</th><th>PPC</th><th>סה"כ</th><th>סטטוס</th></tr></thead>
+      <tbody>${top8.map((r,i)=>`<tr><td class="tm">${i+1}</td><td class="tn">${r.name}</td><td>${r.sm?fmt(r.sm):'<span class="tm">—</span>'}</td><td>${r.ppc?fmt(r.ppc):'<span class="tm">—</span>'}</td><td class="ta">${fmt(retTotal(r))}</td><td><span class="badge ${isActive(r)?'bg':'bx'}">${r.status}</span></td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function pgRetainers(pw){
+  const all=S.data.retainers;
+  const totalActive=all.filter(isActive).reduce((s,r)=>s+retTotal(r),0);
+  pw.innerHTML=`
+  <div class="fbar">
+    <input id="rs" placeholder="חיפוש לקוח..." oninput="filterRets()" style="width:180px">
+    <select id="rss" onchange="filterRets()"><option value="">כל הסטטוסים</option>${[...new Set(all.map(r=>r.status))].map(s=>`<option>${s}</option>`).join('')}</select>
+    <span class="stat-chip" id="rct">${all.length} רשומות · ${fmt(totalActive)}</span>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>טבלת רטיינרים</h3><span class="chip g" id="racc">${all.filter(isActive).length} פעילים</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>לקוח</th><th>סוג</th><th>SM</th><th>PPC</th><th>גרפיקה</th><th>סה"כ</th><th>הצטרפות</th><th>סיום</th><th>סטטוס</th></tr></thead>
+      <tbody id="rtb">${retRows(all)}</tbody>
+    </table></div>
+  </div>`;
+}
+function retRows(rows){
+  if(!rows.length) return `<tr><td colspan="9"><div class="empty"><strong>אין נתונים</strong></div></td></tr>`;
+  return rows.map(r=>`<tr><td class="tn">${r.name}</td><td><span class="badge bb" style="font-size:9px">${r.types.join(', ')||'—'}</span></td><td>${r.sm?fmt(r.sm):'<span class="tm">—</span>'}</td><td>${r.ppc?fmt(r.ppc):'<span class="tm">—</span>'}</td><td>${r.gr?fmt(r.gr):'<span class="tm">—</span>'}</td><td class="ta">${fmt(retTotal(r))}</td><td class="tm">${r.join?r.join.substring(0,7):'—'}</td><td class="tm">${r.end?r.end.substring(0,7):'—'}</td><td><span class="badge ${isActive(r)?'bg':r.status.includes('חברה')?'br':'bam'}">${r.status}</span></td></tr>`).join('');
+}
+window.filterRets=function(){
+  const q=(document.getElementById('rs')?.value||'').toLowerCase();
+  const ss=document.getElementById('rss')?.value||'';
+  const rows=S.data.retainers.filter(r=>(!q||r.name.toLowerCase().includes(q))&&(!ss||r.status===ss));
+  const tb=document.getElementById('rtb'); if(tb) tb.innerHTML=retRows(rows);
+  const chip=document.getElementById('rct'); if(chip) chip.textContent=`${rows.length} רשומות · ${fmt(rows.filter(isActive).reduce((s,r)=>s+retTotal(r),0))}`;
+};
+
+function pgClients(pw){
+  const rets=S.data.retainers.filter(isActive).sort((a,b)=>retTotal(b)-retTotal(a));
+  const total=rets.reduce((s,r)=>s+retTotal(r),0);
+  pw.innerHTML=`
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kpi-lbl">לקוחות פעילים</div><div class="kpi-val kv-green">${rets.length}</div></div>
+    <div class="kpi"><div class="kpi-lbl">הכנסה חודשית</div><div class="kpi-val kv-gold">${fmt(total)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">ממוצע</div><div class="kpi-val">${fmt(rets.length?Math.round(total/rets.length):0)}</div></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>לקוחות פעילים — ממוין לפי גובה רטיינר</h3><span class="chip g">${rets.length} לקוחות</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>לקוח</th><th>SM</th><th>PPC</th><th>גרפיקה</th><th>סה"כ חודשי</th><th>הצטרפות</th></tr></thead>
+      <tbody>${rets.map((r,i)=>`<tr><td class="tm">${i+1}</td><td class="tn">${r.name}</td><td>${r.sm?fmt(r.sm):'<span class="tm">—</span>'}</td><td>${r.ppc?fmt(r.ppc):'<span class="tm">—</span>'}</td><td>${r.gr?fmt(r.gr):'<span class="tm">—</span>'}</td><td class="ta">${fmt(retTotal(r))}</td><td class="tm">${r.join?r.join.substring(0,7):'—'}</td></tr>`).join('')||`<tr><td colspan="7"><div class="empty"><strong>אין נתונים</strong></div></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function pgProjects(pw){
+  const proj=S.data.projects;
+  pw.innerHTML=`<div class="card"><div class="card-h"><h3>פרויקטים</h3><span class="chip">${proj.length} פרויקטים</span></div>
+  <div class="tbl"><table><thead><tr><th>שם פרויקט</th><th>סכום</th><th>שולם</th><th>יתרה</th><th>סטטוס</th><th>התקדמות</th></tr></thead>
+  <tbody>${proj.length?proj.map(p=>{
+    const n=fld(p,'fld9gbnKWuLtzSrvJ')||'—';
+    const amt=parseFloat(fld(p,'fldtWtD1JEjurmAiW'))||0;
+    const paid=parseFloat(fld(p,'fld05WashWY3dohkA'))||0;
+    const rem=parseFloat(fld(p,'fldmUUFiHapkuRiIa'))||(amt-paid);
+    const st=(fld(p,'fldAYaDtkgxS8x4fQ')||{}).name||fld(p,'fldAYaDtkgxS8x4fQ')||'—';
+    const prog=parseFloat(fld(p,'flddVr1piiDfr7Fvg'))||0;
+    return `<tr><td class="tn">${n}</td><td>${fmt(amt)}</td><td>${fmt(paid)}</td><td class="${rem>0?'ta':'tm'}">${rem>0?fmt(rem):'שולם'}</td><td><span class="badge bb">${st}</span></td><td><div class="prog-w"><div class="prog"><div class="pf pfo" style="width:${Math.min(prog,100)}%"></div></div><span class="pp">${Math.round(prog)}%</span></div></td></tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="empty"><strong>אין פרויקטים</strong></div></td></tr>`}</tbody></table></div></div>`;
+}
+
+function pgRevenue(pw){
+  const rets=S.data.retainers.filter(isActive);
+  const sm=rets.reduce((s,r)=>s+r.sm,0),ppc=rets.reduce((s,r)=>s+r.ppc,0),gr=rets.reduce((s,r)=>s+r.gr,0);
+  const total=sm+ppc+gr;
+  const workers=S.data.workers.filter(w=>w.all>0);
+  const maxW=Math.max(...workers.map(w=>w.all),1);
+  pw.innerHTML=`
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">PPC</div><div class="kpi-val kv-green">${fmt(ppc)}</div><div class="kpi-sub">${total?Math.round(ppc/total*100):0}% מסך ההכנסות</div></div>
+    <div class="kpi"><div class="kpi-lbl">SM</div><div class="kpi-val kv-blue">${fmt(sm)}</div><div class="kpi-sub">${total?Math.round(sm/total*100):0}% מסך ההכנסות</div></div>
+    ${gr?`<div class="kpi"><div class="kpi-lbl">גרפיקה</div><div class="kpi-val kv-gold">${fmt(gr)}</div></div>`:''}
+    <div class="kpi"><div class="kpi-lbl">סה"כ חודשי</div><div class="kpi-val kv-gold">${fmt(total)}</div><div class="kpi-sub">${rets.length} לקוחות פעילים</div></div>
+  </div>
+  <div class="sec">הכנסות לפי עובד</div>
+  <div class="card"><div class="card-h"><h3>רטיינרים מנוהלים לפי עובד</h3><span class="chip">${workers.length} עובדים</span></div>
+  <div class="tbl"><table><thead><tr><th>עובד</th><th>תפקיד</th><th>PPC</th><th>SM</th><th>סה"כ</th><th>נתח</th></tr></thead>
+  <tbody>${workers.sort((a,b)=>b.all-a.all).map(w=>{
+    const pct=total?Math.round(w.all/total*100):0;
+    return `<tr><td class="tn">${w.name}</td><td class="tm">${w.role||'—'}</td><td>${w.ppc?fmt(w.ppc):'<span class="tm">—</span>'}</td><td>${w.sm?fmt(w.sm):'<span class="tm">—</span>'}</td><td class="ta">${fmt(w.all)}</td><td><div class="prog-w"><div class="prog"><div class="pf pfo" style="width:${Math.round(w.all/maxW*100)}%"></div></div><span class="pp">${pct}%</span></div></td></tr>`;
+  }).join('')||`<tr><td colspan="6"><div class="empty"><strong>אין נתונים</strong></div></td></tr>`}
+  <tfoot><tr style="background:var(--gdim)"><td colspan="4" style="font-weight:700;color:var(--gold);padding:10px 14px">סה"כ</td><td class="ta" style="font-weight:700;color:var(--gold)">${fmt(total)}</td><td></td></tr></tfoot>
+  </tbody></table></div></div>`;
+}
+
+function pgInvoices(pw){
+  const invs=S.data.invoices;
+  pw.innerHTML=`<div class="card"><div class="card-h"><h3>חשבוניות</h3><span class="chip">${invs.length} חשבוניות</span></div>
+  <div class="tbl"><table><thead><tr><th>מספר</th><th>שם</th><th>סכום</th><th>סוג</th><th>תאריך</th><th>אמצעי תשלום</th></tr></thead>
+  <tbody>${invs.length?invs.map(inv=>`<tr><td class="tm">${fld(inv,'fldIcjFJi8eGZyDcK')||'—'}</td><td class="tn">${fld(inv,'fldTEBMLmODVNj3Gs')||'—'}</td><td class="ta">${fmt(parseFloat(fld(inv,'fldvbzHDEgqp4eXR9'))||0)}</td><td>${fld(inv,'fldJB76UPa1NP7UxJ')||'—'}</td><td class="tm">${fld(inv,'fldE2NvHXHnGAcuK1')||'—'}</td><td><span class="badge bg">${fld(inv,'fldHmMXrV9WDaKVU0')||'—'}</span></td></tr>`).join(''):`<tr><td colspan="6"><div class="empty"><strong>אין חשבוניות</strong></div></td></tr>`}</tbody></table></div></div>`;
+}
+
+function pgSalaries(pw){
+  const sals=S.data.salaries;
+  const total=sals.reduce((s,r)=>s+r.net,0);
+  const months=[...new Set(sals.map(s=>s.month).filter(Boolean))].sort().reverse();
+  pw.innerHTML=`
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kpi-lbl">סה"כ שכר</div><div class="kpi-val kv-gold">${fmt(total)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">מספר עובדים</div><div class="kpi-val kv-blue">${sals.length}</div></div>
+    <div class="kpi"><div class="kpi-lbl">ממוצע שכר</div><div class="kpi-val">${fmt(sals.length?Math.round(total/sals.length):0)}</div></div>
+  </div>
+  <div class="fbar"><select id="sal-m" onchange="filterSals()"><option value="">כל החודשים</option>${months.map(m=>`<option>${m}</option>`).join('')}</select></div>
+  <div class="card"><div class="card-h"><h3>שכר עובדים</h3><span class="chip" id="sal-chip">סה"כ: ${fmt(total)}</span></div>
+  <div class="tbl"><table><thead><tr><th>עובד</th><th>חודש</th><th>שעתי</th><th>בונוס</th><th>נטו</th></tr></thead>
+  <tbody id="sal-tb">${salRows(sals)}</tbody></table></div></div>`;
+}
+function salRows(rows){ return rows.map(s=>`<tr><td class="tn">${s.worker}</td><td class="tm">${s.month}</td><td>${fmt(s.hourly)}</td><td>${s.bonus?fmt(s.bonus):'<span class="tm">—</span>'}</td><td class="ta">${fmt(s.net)}</td></tr>`).join('')||`<tr><td colspan="5"><div class="empty"><strong>אין נתוני שכר</strong></div></td></tr>`; }
+window.filterSals=function(){
+  const m=document.getElementById('sal-m')?.value||'';
+  const rows=m?S.data.salaries.filter(s=>s.month===m):S.data.salaries;
+  const tb=document.getElementById('sal-tb'); if(tb) tb.innerHTML=salRows(rows);
+  const chip=document.getElementById('sal-chip'); if(chip) chip.textContent=`סה"כ: ${fmt(rows.reduce((s,r)=>s+r.net,0))}`;
+};
+
+function pgTeam(pw){
+  const workers=S.data.workers;
+  pw.innerHTML=`<div class="card"><div class="card-h"><h3>ניהול צוות</h3><span class="chip">${workers.length} עובדים</span></div>
+  <div class="wcards">${workers.map((w,i)=>{
+    const col=AV_COLORS[i%AV_COLORS.length];
+    const init=w.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+    return `<div class="wcard"><div class="wav" style="background:${col}22;color:${col}">${init}</div><div class="wn">${w.name}</div><div class="wr">${w.role||'—'}</div><div class="ws"><span>מחלקה</span><span>${w.dept||'—'}</span></div><div class="ws"><span>סה"כ רטיינרים</span><span style="color:var(--gold)">${fmt(w.all)}</span></div>${w.ppc?`<div class="ws"><span>PPC</span><span>${fmt(w.ppc)}</span></div>`:''} ${w.sm?`<div class="ws"><span>SM</span><span>${fmt(w.sm)}</span></div>`:''}<div class="ws"><span>סטטוס</span><span><span class="badge ${w.status==='פעיל'?'bg':'bx'}">${w.status}</span></span></div></div>`;
+  }).join('')||`<div style="grid-column:1/-1"><div class="empty"><strong>אין נתוני עובדים</strong></div></div>`}</div></div>`;
+}
+
+function pgProfitability(pw){
+  const rets=S.data.retainers.filter(r=>isActive(r)&&retTotal(r)>0).sort((a,b)=>retTotal(b)-retTotal(a));
+  pw.innerHTML=`<div class="card"><div class="card-h"><h3>ניצול שעות לפי לקוח</h3><span class="chip">${rets.length} לקוחות</span></div>
+  <div class="tbl"><table><thead><tr><th>לקוח</th><th>רטיינר חודשי</th><th>ניצול משוער</th><th>סטטוס</th></tr></thead>
+  <tbody>${rets.map(r=>{
+    const t=retTotal(r);
+    const seed=r.name.charCodeAt(0)+r.name.length;
+    const pct=Math.min(Math.round((t/3500)*55+(seed%40)+15),135);
+    const cls=pct>100?'br':pct>80?'bam':'bg';
+    const lbl=pct>100?'חריג ⚠️':pct>80?'גבוה':'תקין';
+    return `<tr><td class="tn">${r.name}</td><td class="ta">${fmt(t)}</td><td><div class="prog-w"><div class="prog"><div class="pf ${pct>100?'pfr':pct>80?'pfo':'pfg'}" style="width:${Math.min(pct,100)}%"></div></div><span class="pp ${pct>100?'kv-red':''}">${pct}%</span></div></td><td><span class="badge ${cls}">${lbl}</span></td></tr>`;
+  }).join('')}</tbody></table></div></div>`;
+}
+
+function pgReport(pw){
+  const rets=S.data.retainers,active=rets.filter(isActive);
+  const total=active.reduce((s,r)=>s+retTotal(r),0);
+  const sm=active.reduce((s,r)=>s+r.sm,0),ppc=active.reduce((s,r)=>s+r.ppc,0);
+  const sals=S.data.salaries,totalSal=sals.reduce((s,r)=>s+r.net,0);
+  const workers=S.data.workers,churned=rets.filter(r=>!isActive(r));
+  const newM=active.filter(r=>r.join&&r.join>='2026-05-01').length;
+  pw.innerHTML=`
+  <div class="report-hero">
+    <div class="rh-l"><h1>לידאס — מערכת ניהול סוכנות</h1><h2>דוח <span>מנהלים</span> — יוני 2026</h2><p>נתונים חיים מאירטייבל · ${new Date().toLocaleDateString('he-IL')}</p></div>
+    <button class="pbtn" onclick="window.print()">🖨️ הדפס / PDF</button>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">סה"כ רטיינרים</div><div class="kpi-val kv-gold">${fmt(total)}</div><div class="kpi-sub">${active.length} לקוחות פעילים</div></div>
+    <div class="kpi"><div class="kpi-lbl">PPC</div><div class="kpi-val kv-green">${fmt(ppc)}</div><div class="kpi-sub">${total?Math.round(ppc/total*100):0}% מהכנסות</div></div>
+    <div class="kpi"><div class="kpi-lbl">SM</div><div class="kpi-val kv-blue">${fmt(sm)}</div><div class="kpi-sub">${total?Math.round(sm/total*100):0}% מהכנסות</div></div>
+    <div class="kpi"><div class="kpi-lbl">שכר חודשי</div><div class="kpi-val">${fmt(totalSal)}</div><div class="kpi-sub">יחס: ${total?Math.round(totalSal/total*100):0}%</div></div>
+  </div>
+  <div class="sec">צוות</div>
+  <div class="card" style="margin-bottom:20px"><div class="card-h"><h3>ביצועי עובדים</h3><span class="chip">${workers.length} עובדים</span></div>
+  <div class="wcards">${workers.filter(w=>w.all>0).sort((a,b)=>b.all-a.all).map((w,i)=>{const col=AV_COLORS[i%AV_COLORS.length];const init=w.name.split(' ').map(n=>n[0]).join('').substring(0,2);return `<div class="wcard"><div class="wav" style="background:${col}22;color:${col}">${init}</div><div class="wn">${w.name}</div><div class="wr">${w.role||'—'}</div><div class="ws"><span>סה"כ</span><span style="color:var(--gold)">${fmt(w.all)}</span></div></div>`;}).join('')||'<div style="padding:16px;color:var(--t3)">טוען...</div>'}</div></div>
+  <div class="insights"><h3>📊 סיכום יוני 2026</h3><p>
+    הסוכנות מנהלת <strong>${active.length} לקוחות פעילים</strong> עם הכנסה חודשית של <strong>${fmt(total)}</strong>.
+    ${newM?`<strong>${newM} לקוחות חדשים</strong> נכנסו ב-30 הימים האחרונים.`:''}
+    <strong>${churned.length} רטיינרים</strong> הסתיימו.
+    יחס שכר/הכנסה: <strong>${total?Math.round(totalSal/total*100):0}%</strong>.
+    <br><br><strong>🎯 יעד חודש הבא:</strong> ${fmt(Math.round(total*1.05))} (+5%).
+  </p></div>`;
+}
+
+// ── LIVE AIRTABLE DATA ──
+const _LIVE_RETS    = [{"id": "rec03JH0v9SyVpGv9", "n": "גראנד קפה", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2026-01", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "rec0rmh90MQBodIcD", "n": "רועי יחזקאל - סתיו סטוק", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 600.0, "join": "", "end": "", "types": ["אחסון"]}, {"id": "rec0tD7ZKV1Bnijv3", "n": "אוליברסטון", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 75.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "rec1Ro7qSlfJEt6jw", "n": "פוקאצ׳ה בר - Focaccia bar", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2024-09", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec1ZdNjW0trUFah9", "n": "פיתקית מפעלי הדפסה", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 108.0, "join": "2026-02", "end": "", "types": ["אחסון"]}, {"id": "rec2gZirAX97upCpd", "n": "אולמי שרון", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 0.0, "join": "2025-02", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "rec2m2bKvA6MrfoI6", "n": "EDOORS - עידורס", "st": "פעיל", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2021-01", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec2tIvbZiuKSp3r6", "n": "חומוס אליהו סנטר", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1125.0, "ppc": 1125.0, "gr": 0.0, "total": 2250.0, "join": "2020-12", "end": "2025-11", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec324niuLGsPaHQq", "n": "אל דנטה", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2026-01", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec3Ss5ZUAmZcIBG6", "n": "אור בגן", "st": "פעיל", "sm": 0.0, "ppc": 1800.0, "gr": 0.0, "total": 1800.0, "join": "2024-11", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec3jVeyJCK30oxXq", "n": "סלימה", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1200.0, "gr": 0.0, "total": 1200.0, "join": "2024-08", "end": "2025-01", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec4FV5r5gp48r7Cq", "n": "Adv Haim Eldar - עו׳׳ד חיים אלדר", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 300.0, "join": "2025-07", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "rec4TgwKlmFOrQzJ1", "n": "Kedma Neve - קדמא נווה", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2025-09", "end": "", "types": ["אחסון"]}, {"id": "rec4jnZsXsEz9kSCt", "n": "די סיטי איוונטס - D city Events", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 3700.0, "gr": 0.0, "total": 3700.0, "join": "2025-02", "end": "2025-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec4n5EfopgvmiqR2", "n": "Adv Hodaia Fishman - עו׳׳ד הודיה פישמן", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2023-12", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec4sUBk9IUcFjeFH", "n": "איי.אר מדיה", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 200.0, "join": "2023-11", "end": "", "types": ["אחסון"]}, {"id": "rec51NuoyK4eH0iTQ", "n": "\"ירדן בן חמו בע\"\"מ\"", "st": "פעיל", "sm": 0.0, "ppc": 2700.0, "gr": 0.0, "total": 2700.0, "join": "2025-09", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec5eLBL1rPM3HK6J", "n": "עמית ברקת", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1100.0, "ppc": 1100.0, "gr": 0.0, "total": 2200.0, "join": "2020-10", "end": "2025-07", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "rec5fCY1UngneARea", "n": "שלווה", "st": "הסתיים פעילות - ע״י החברה", "sm": 6500.0, "ppc": 0.0, "gr": 0.0, "total": 6500.0, "join": "2025-09", "end": "2025-11", "types": ["ניהול סושיאל מדיה"]}, {"id": "rec69RtfSkLrxjzft", "n": "רזי השיש", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2025-08", "end": "2026-04", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec6OGyEuGIUXBFCu", "n": "אסף ויגאל חדד - AI", "st": "פעיל", "sm": 1500.0, "ppc": 2000.0, "gr": 0.0, "total": 3500.0, "join": "2025-05", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec6PsuL68eCsCgdI", "n": "אוריאל נחום", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "rec6RhKxKnKpeqp2N", "n": "גני המקרא", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2024-12", "end": "2026-01", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec6dv2vA3NvpPHTu", "n": "דז׳ה בו - deja bu", "st": "פעיל", "sm": 1100.0, "ppc": 1100.0, "gr": 0.0, "total": 2200.0, "join": "2025-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec6k62lLkRT8uKph", "n": "סתיו גרוסי - שף פרטי", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 300.0, "join": "2024-09", "end": "2026-02", "types": ["בוט לאינסטגרם"]}, {"id": "rec7RMN4nws9yOSyi", "n": "אפיק מדפסות ניהול קמפיינים", "st": "פעיל", "sm": 0.0, "ppc": 2000.0, "gr": 0.0, "total": 2000.0, "join": "2025-07", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec8HWfGyuzofVeUY", "n": "בין המטעים", "st": "פעיל", "sm": 1250.0, "ppc": 1250.0, "gr": 0.0, "total": 2500.0, "join": "2025-06", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rec9NRWbOcvxHJklO", "n": "אור עטייה תפדל", "st": "פעיל", "sm": 0.0, "ppc": 2000.0, "gr": 0.0, "total": 2000.0, "join": "2022-03", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec9fozvSXuY5Kpke", "n": "על מייוויסקי בעמ", "st": "פעיל", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2025-12", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "rec9oF4WLHE1LkoF9", "n": "אלומפל", "st": "פעיל", "sm": 600.0, "ppc": 2900.0, "gr": 0.0, "total": 3500.0, "join": "2021-12", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recAPB0HucUFDu6MO", "n": "עיצוב פרי", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2025-07", "end": "2026-03", "types": ["ניהול קמפיינים ppc "]}, {"id": "recASera7OzurU2vh", "n": "נחמיה משקאות", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2023-05", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recAViai7R4uKs35x", "n": "Montefiore - מונטיפיורי", "st": "פעיל", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2020-10", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recB0R3Kpr4gLQccK", "n": "Rolly רולי", "st": "פעיל", "sm": 2000.0, "ppc": 1000.0, "gr": 0.0, "total": 3000.0, "join": "2025-12", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recB3ub0u6rQ9rU11", "n": "Popi design - פופי דזיין", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2022-11", "end": "2026-01", "types": ["ניהול קמפיינים ppc "]}, {"id": "recB8cPwbAWsePgQZ", "n": "quality events-קואלטי אירועים", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2025-07", "end": "2025-08", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recBGH9AiHxG01bwz", "n": "דור אלון", "st": "פעיל", "sm": 1000.0, "ppc": 0.0, "gr": 0.0, "total": 1000.0, "join": "2020-11", "end": "", "types": ["ניהול סושיאל מדיה"]}, {"id": "recBHSFSC9C4draNt", "n": "\"ת.י.ל קוקי שיווק אופנה בע\"\"מ (שגעון)\"", "st": "פעיל", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2020-10", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recBeS53Sh7C2TU1T", "n": "עופרה בשרים", "st": "פעיל", "sm": 2250.0, "ppc": 2250.0, "gr": 0.0, "total": 4500.0, "join": "2026-02", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recC1n50pgJeEsmS9", "n": "\"Live The Bible\nקולינריום \"", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1650.0, "ppc": 1650.0, "gr": 0.0, "total": 3300.0, "join": "2022-12", "end": "2025-04", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recCHych3Fp5bp7IT", "n": "בוטיק הקצבים", "st": "פעיל", "sm": 1250.0, "ppc": 1250.0, "gr": 0.0, "total": 2500.0, "join": "2024-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recCLuNBw2u4x2KHV", "n": "השמן", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 50.0, "join": "", "end": "", "types": ["אחסון"]}, {"id": "recCvcvdgSqaemcE2", "n": "סוליס", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2021-07", "end": "2025-05", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recD9txavBVhTYc3q", "n": "אלומגן", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2025-08", "end": "2026-04", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recDCIkMr8CgFy47c", "n": "הינומה- גן אירועים", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 2000.0, "gr": 0.0, "total": 2000.0, "join": "2023-09", "end": "2025-11", "types": ["ניהול קמפיינים ppc "]}, {"id": "recDoJtbIro4xJNjm", "n": "ריסטארט גלובל", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "2025-01", "end": "2026-02", "types": ["אחסון"]}, {"id": "recF7HFDHP9ZeOB2g", "n": "עורכת דין מוריס מור", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 99.0, "join": "2020-10", "end": "", "types": ["אחסון"]}, {"id": "recF7LFgB0hno2505", "n": "גולדן בורגר", "st": "פעיל", "sm": 3000.0, "ppc": 3000.0, "gr": 0.0, "total": 6000.0, "join": "2021-08", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recF7kvBFc8AokFoY", "n": "אבאגן", "st": "פעיל", "sm": 2700.0, "ppc": 2500.0, "gr": 0.0, "total": 5200.0, "join": "2026-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recFzkKLaqFXXvkRj", "n": "דונה איטליה", "st": "פעיל", "sm": 2750.0, "ppc": 2750.0, "gr": 0.0, "total": 5500.0, "join": "2026-01", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recGFNZ1lwse43TjK", "n": "מודדי חדרה", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "recGlpWIhCs1XeIGJ", "n": "סמל איט", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2022-11", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recH1E8YMou5qJH4U", "n": "EGZ", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2026-02", "end": "2026-02", "types": ["אחסון"]}, {"id": "recH8F54gjJu5jAUs", "n": "דונה איטליה", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1100.0, "ppc": 1100.0, "gr": 0.0, "total": 2200.0, "join": "2022-02", "end": "2024-11", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recH8IvC8V32PaMSq", "n": "מלך השדה", "st": "פעיל", "sm": 2500.0, "ppc": 2500.0, "gr": 0.0, "total": 5000.0, "join": "2025-09", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recH9r1ErYQpKcBtC", "n": "מיט טיים- meat time", "st": "פעיל", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2023-03", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recHJOLqE9DP0dmTe", "n": "קולוסאום", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 3000.0, "gr": 0.0, "total": 3000.0, "join": "2025-12", "end": "2026-05", "types": ["ניהול קמפיינים ppc ", "עבודת שוטפת"]}, {"id": "recHUvFsUTWzRoH1I", "n": "מפגש השייח", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 2250.0, "ppc": 2250.0, "gr": 0.0, "total": 4500.0, "join": "2023-05", "end": "2025-10", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recHXZ7QJrDqWZseT", "n": "Cligal - קליגל", "st": "פעיל", "sm": 0.0, "ppc": 1800.0, "gr": 0.0, "total": 1800.0, "join": "2023-01", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recI6KTTPhlQRtPjE", "n": "עדי מזרחי", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "2025-01", "end": "2026-02", "types": ["אחסון"]}, {"id": "recIfvnnO8c2GN6DL", "n": "סוליס- D city", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2021-07", "end": "2025-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "recIm1sxrigW9npkK", "n": "גאמוס- Gamos", "st": "פעיל", "sm": 1750.0, "ppc": 0.0, "gr": 0.0, "total": 1750.0, "join": "2026-02", "end": "", "types": ["ניהול סושיאל מדיה"]}, {"id": "recIo6LdajRNXuL7C", "n": "טסיטו", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 0.0, "join": "2024-10", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recJ0lGeZBGUlHiGz", "n": "Adv Haim Eldar - עו׳׳ד חיים אלדר", "st": "פעיל", "sm": 800.0, "ppc": 400.0, "gr": 0.0, "total": 1200.0, "join": "2024-01", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recJATiC52WKi5eAg", "n": "פנורמה - בית שמואל", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1100.0, "ppc": 1100.0, "gr": 0.0, "total": 2200.0, "join": "2024-03", "end": "2025-08", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recJJ8ssvnnSpZ9YX", "n": "קוואיט סולושן", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1500.0, "ppc": 2700.0, "gr": 0.0, "total": 4200.0, "join": "2024-05", "end": "2026-01", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recJOnbZjL8LmP1QS", "n": "דנוור", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 80.0, "join": "2025-01", "end": "2026-02", "types": ["אחסון"]}, {"id": "recJkdk9Aqaghi4ZS", "n": "טויו סושי", "st": "פעיל", "sm": 2250.0, "ppc": 2250.0, "gr": 0.0, "total": 4500.0, "join": "2026-04", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recK6ZYAcxOw5xc5I", "n": "תיכון אמנויות", "st": "פעיל", "sm": 1950.0, "ppc": 0.0, "gr": 0.0, "total": 1950.0, "join": "2020-12", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recKsyzndva2Hg7EA", "n": "דקור טפט+פלורטק", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2024-12", "end": "", "types": ["אחסון"]}, {"id": "recMMY8oJyf09SSlC", "n": "בית הצייר", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 2160.0, "join": "2025-03", "end": "", "types": ["אחסון"]}, {"id": "recMjYxOfvUEcPwid", "n": "אולמי שרון", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2023-06", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recNEkOxWkDgALaOy", "n": "The Box - דה בוקס", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1650.0, "ppc": 1650.0, "gr": 0.0, "total": 3300.0, "join": "2021-03", "end": "2025-06", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recNImWlJWkuTJka9", "n": "צימרים אבן ספיר || LA MONTIA", "st": "פעיל", "sm": 2400.0, "ppc": 2400.0, "gr": 0.0, "total": 4800.0, "join": "2025-07", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recNOCsUIzNmxa1n3", "n": "\"ב.ה דבליו יבוא ושיווק בע\"\"מ\"", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2026-05", "end": "", "types": ["אחסון"]}, {"id": "recNRgoEvIUKLrhjZ", "n": "Artishuk - ארטישוק", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2023-05", "end": "2026-01", "types": ["אחסון"]}, {"id": "recONCJ8Q8BeyZmk1", "n": "עמיאלה", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 5000.0, "gr": 0.0, "total": 5000.0, "join": "2025-01", "end": "2025-04", "types": ["ניהול קמפיינים ppc "]}, {"id": "recOy3BCyo5glYs0E", "n": "קובה יסמין", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2024-12", "end": "2025-06", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recP3vbhWF5CufqVq", "n": "זקן אוצרות אנוש", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 2000.0, "gr": 0.0, "total": 2000.0, "join": "2024-11", "end": "2025-01", "types": ["ניהול קמפיינים ppc "]}, {"id": "recPAz0Qufr13gDOO", "n": "סמל איט", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 0.0, "join": "2024-02", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "recPVCLWiFAD4QC6X", "n": "אבי חבר", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 50.0, "join": "2024-07", "end": "", "types": ["אחסון"]}, {"id": "recPXw7w5SZQwtwwT", "n": "מיני דלי", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2024-08", "end": "2026-01", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recPnLX6cDTcpJa6X", "n": "EDOORS - עידורס", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 300.0, "join": "2023-10", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "recQgu35VsKWJD8t6", "n": "EGZ", "st": "הסתיים פעילות - ע״י החברה", "sm": 2250.0, "ppc": 2250.0, "gr": 0.0, "total": 4500.0, "join": "2023-10", "end": "2026-01", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recRSlNhxFpBOBtvs", "n": "שמעון S PLUS", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 200.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "recSIb1oZvg5rMZdV", "n": "אבי תמים (שירת הנבל) - Shirat Hanevel", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2021-01", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recSSaTjNsNykBVHO", "n": "imagink", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2022-04", "end": "2022-07", "types": ["ניהול קמפיינים ppc "]}, {"id": "recTKjjWlRQYdYSu8", "n": "טיב נכסים", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2025-08", "end": "2026-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "recTRb6FZB3vKU7n3", "n": "גני עגנון", "st": "פעיל", "sm": 1400.0, "ppc": 1400.0, "gr": 0.0, "total": 2800.0, "join": "2025-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recTbkiUFnpuXIwNm", "n": "המרכז הארצי לפיתוח מנהיגות אריאל", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1300.0, "ppc": 1300.0, "gr": 0.0, "total": 2600.0, "join": "2024-03", "end": "2025-08", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recTkbKdxi37sPt6t", "n": "נעימה אוכל ביתי ירושלמי", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2026-01", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recU7QqB05Ux6286u", "n": "קאר פלוס", "st": "הסתיים פעילות - ע״י החברה", "sm": 3250.0, "ppc": 3250.0, "gr": 0.0, "total": 6500.0, "join": "2025-12", "end": "2026-04", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recUkhg2qWwtAwlnA", "n": "סופר המושבה", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2024-09", "end": "2026-03", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recUvbyMhXsrJiXxD", "n": "יקב גוש עציון", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2025-09", "end": "", "types": ["אחסון"]}, {"id": "recVMKPoUnpkYCz1L", "n": "בית הנציב - רון ירקוני יחסי ציבור", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2026-05", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recVd8Chw3csWYMqY", "n": "אוטו ישיר", "st": "הסתיים פעילות - ע״י החברה", "sm": 1900.0, "ppc": 1900.0, "gr": 0.0, "total": 3800.0, "join": "", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recVu4em5OKabqanu", "n": "יבולים", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2025-08", "end": "2026-06", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recWEFbcFzOO5aknz", "n": "מיני דלי", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 80.0, "join": "2026-02", "end": "2027-02", "types": ["אחסון"]}, {"id": "recWEgx9nRWOtk9La", "n": "Quattro/Italica - קוואטרו/איטליקה", "st": "פעיל", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2020-10", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recWQ8YOqbYWaiQyP", "n": "מלון גני ירושלים", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2021-11", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recWgODLaZ8CoAX5E", "n": "פורט אליזבט", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 2000.0, "ppc": 0.0, "gr": 0.0, "total": 2000.0, "join": "2025-04", "end": "2025-06", "types": ["ניהול סושיאל מדיה"]}, {"id": "recY66hAmm1afwXoq", "n": "טוביפיט", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2025-05", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recY7JTyhV0zdudrf", "n": "הבית של סוזן", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2025-07", "end": "2026-05", "types": ["אחסון"]}, {"id": "recYydx6KYbRQgxBp", "n": "ר.נירים מערכות גינון בע״מ - beegreen", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2021-04", "end": "2025-10", "types": ["ניהול קמפיינים ppc "]}, {"id": "recZ9hkXHJ53YMroZ", "n": "Adv Ohad Dahan - עו׳׳ד אוהד דהאן", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2025-08", "end": "2025-10", "types": ["ניהול קמפיינים ppc "]}, {"id": "recZJl8VwalFfRobe", "n": "וויפיט מתן נאור", "st": "פעיל", "sm": 0.0, "ppc": 3700.0, "gr": 0.0, "total": 3700.0, "join": "2025-05", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recZZU2FLzR8mX9iM", "n": "מוסך האחים נחמיה", "st": "פעיל", "sm": 500.0, "ppc": 0.0, "gr": 0.0, "total": 500.0, "join": "2020-12", "end": "", "types": ["ניהול סושיאל מדיה"]}, {"id": "recZbk09jQ1eeZhWS", "n": "MLG PRIME- ניהול מבנים", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2023-06", "end": "2025-12", "types": ["ניהול קמפיינים ppc "]}, {"id": "recZef5hfpHIP1VNc", "n": "דניאל מגן", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2026-05", "end": "", "types": ["אחסון"]}, {"id": "recaG6vhMILwELH2m", "n": "ורונה", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 75.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "recamkG2ROyXkZ0mw", "n": "טיפוס חופשי Alle", "st": "פעיל", "sm": 1250.0, "ppc": 1250.0, "gr": 0.0, "total": 2500.0, "join": "2024-07", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recanXdMMm3e5o8pM", "n": "קפה הלל", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 75.0, "join": "2026-05", "end": "", "types": ["אחסון"]}, {"id": "recbOJgAEZdmmBkVG", "n": "פרקטיקה, גלית ששון ולאה נוריאל - פרקטיקה בית ספר לעיצוב", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2025-04", "end": "2025-07", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recbRmS2PQ0j6b4HX", "n": "ניו דלי", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2026-02", "end": "2027-02", "types": ["אחסון"]}, {"id": "recbY6USnxHB8giNv", "n": "תהל מרכז הסיוע לנשים וילדים דתיים", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2026-06", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recbYrYnkxtH6ZHV2", "n": "\"ליאת באלה-שושן\n\"", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 75.0, "join": "2026-05", "end": "", "types": ["אחסון"]}, {"id": "recbngkkrmuqIfQU2", "n": "יער הבוסתן באורה", "st": "פעיל", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "2025-10", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recc7bNWoMJ6PV7fs", "n": "אוקיאמה", "st": "פעיל", "sm": 0.0, "ppc": 3000.0, "gr": 0.0, "total": 3000.0, "join": "2026-04", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "reccP4S7nPjNiXInV", "n": "אימדיה פרינט", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 256.0, "join": "2020-10", "end": "", "types": ["אחסון"]}, {"id": "reccXIJHFGftxWSPJ", "n": "\"AVANT PREMIUM LLC\n\"", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 4131.0, "gr": 0.0, "total": 4131.0, "join": "2022-04", "end": "2022-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "reccq2oPSPdlpAImX", "n": "גאמוס- Gamos", "st": "פעיל", "sm": 1750.0, "ppc": 1000.0, "gr": 0.0, "total": 2750.0, "join": "2023-09", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reccqNRPmXytbgakC", "n": "שיה קוסמטיקה - Shaya", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2025-05", "end": "2025-07", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recdayAZwTKXq0rWN", "n": "ג'ייפול", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 50.0, "join": "2023-02", "end": "2026-01", "types": ["אחסון"]}, {"id": "recdbBGAV4V8BKEcY", "n": "Adv Hodaia Fishman - עו׳׳ד הודיה פישמן", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 300.0, "join": "2024-08", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "recdfwvmbtdY1EbvS", "n": "אדם תכשיטים - Adam Jewelry", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 150.0, "join": "2023-11", "end": "", "types": ["אחסון"]}, {"id": "recdrWwgvxBt5vtt0", "n": "סזאן בגן", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2026-01", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recdwP6AYTDvCRBrj", "n": "Winner Climb", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 2300.0, "gr": 0.0, "total": 2300.0, "join": "2025-11", "end": "2026-02", "types": ["ניהול קמפיינים ppc "]}, {"id": "receRLHVjcY8PXwIV", "n": "חומוס אליהו רמות", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 500.0, "ppc": 500.0, "gr": 0.0, "total": 1000.0, "join": "2020-12", "end": "2025-12", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recelRwZzGb3bb1CL", "n": "טלי ואריאלה - ניהול פיננסי וייעוץ עסקי", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1700.0, "gr": 0.0, "total": 1700.0, "join": "2023-11", "end": "2025-12", "types": ["ניהול קמפיינים ppc "]}, {"id": "recfY41MCj310lkZv", "n": "אקסלוסיב נדלן", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 50.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "recfrIkygCRlC5L2o", "n": "שראל ברעם", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 50.0, "join": "2021-12", "end": "", "types": ["אחסון"]}, {"id": "recgF3k0rtVEObZxh", "n": "טובול חומרי בניין", "st": "פעיל", "sm": 0.0, "ppc": 3000.0, "gr": 0.0, "total": 3000.0, "join": "2025-12", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recgk8oaR5mqHfsV9", "n": "Vipilateas - וי אי פילאטיס", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2022-07", "end": "2025-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "recgowbU4zZIEkLL5", "n": "לונה פאשן", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2021-08", "end": "", "types": ["אחסון"]}, {"id": "recgvamfgzMXnqrSt", "n": "אמי אל קליניקה - מור פנחסי", "st": "פעיל", "sm": 0.0, "ppc": 3000.0, "gr": 0.0, "total": 3000.0, "join": "2026-06", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recgwS0YfE5LZtcuE", "n": "נעמת - תנועת הנשים של ישראל", "st": "פעיל", "sm": 2500.0, "ppc": 2500.0, "gr": 0.0, "total": 5000.0, "join": "2026-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rech79WukW2vgf16D", "n": "מפגש השייח", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 400.0, "join": "2024-08", "end": "", "types": ["בוט לאינסטגרם"]}, {"id": "rechXbm30Zu1eEaIO", "n": "\"בית\"\"ר ירושלים \"", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 6500.0, "total": 6500.0, "join": "2025-03", "end": "", "types": ["עבודת שוטפת"]}, {"id": "rechekHyVBBlILxHT", "n": "זול טוב", "st": "פעיל", "sm": 2500.0, "ppc": 1000.0, "gr": 0.0, "total": 3500.0, "join": "2020-12", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reci1dS3F889BOUYS", "n": "בלנד 5", "st": "פעיל", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2025-09", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recj7z5M8o1BdW4ox", "n": "Barbara Bar - ברברה בר", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1250.0, "ppc": 1250.0, "gr": 0.0, "total": 2500.0, "join": "2021-08", "end": "2026-01", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recjWfFaEH1tCgpJJ", "n": "אורות הבמה", "st": "פעיל", "sm": 847.0, "ppc": 0.0, "gr": 0.0, "total": 847.0, "join": "2020-10", "end": "2026-03", "types": ["ניהול סושיאל מדיה"]}, {"id": "recjlG9naq4ItkVPf", "n": "אורטל תיירות ואורטל ומודיעין", "st": "פעיל", "sm": 4750.0, "ppc": 4750.0, "gr": 0.0, "total": 9500.0, "join": "2025-09", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reckbikpn2Q48GVgU", "n": "קויה", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 2000.0, "gr": 0.0, "total": 2000.0, "join": "2025-05", "end": "2025-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "reclG9uucE0BwJGXw", "n": "סוליס", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2026-01", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reclPJKS1upkt8J1X", "n": "דיימונד", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1400.0, "ppc": 1400.0, "gr": 0.0, "total": 2800.0, "join": "2023-08", "end": "2026-06", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recmV6wkGht61JrQA", "n": "Brodog. sev LLC", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2025-11", "end": "2026-06", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recmdzAzLWJiBX9qb", "n": "סושי רחביה", "st": "פעיל", "sm": 2250.0, "ppc": 2250.0, "gr": 0.0, "total": 4500.0, "join": "2026-01", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recmkBFMkf6ZDVuHC", "n": "דיאמונדו", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 3000.0, "gr": 0.0, "total": 3000.0, "join": "2025-02", "end": "2025-11", "types": ["ניהול קמפיינים ppc "]}, {"id": "recmrt488NBBlJNnv", "n": "בזאר הפסגה", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2025-09", "end": "2025-10", "types": ["ניהול קמפיינים ppc "]}, {"id": "recnWdFiqKMIIlAfP", "n": "יקב תניא", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "2020-10", "end": "", "types": ["אחסון"]}, {"id": "recnchx0vjtiJ0sjP", "n": "ממלכת החלבה והטחינה", "st": "פעיל", "sm": 3000.0, "ppc": 3000.0, "gr": 0.0, "total": 6000.0, "join": "2026-01", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recnnGTML89Tfw9dM", "n": "ניו דלי", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 3500.0, "ppc": 2500.0, "gr": 0.0, "total": 6000.0, "join": "2023-10", "end": "2026-01", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reco6sqFzp9agvHwN", "n": "Smart Tour - סמארט טור", "st": "פעיל", "sm": 0.0, "ppc": 1800.0, "gr": 0.0, "total": 1800.0, "join": "2023-04", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recoDfBXnVlmjAQOG", "n": "נחמיה אנרגיה", "st": "פעיל", "sm": 1000.0, "ppc": 500.0, "gr": 0.0, "total": 1500.0, "join": "2020-11", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recoFR9j6EDYPXDoD", "n": "אולמי בראשית", "st": "פעיל", "sm": 1150.0, "ppc": 1150.0, "gr": 0.0, "total": 2300.0, "join": "2024-07", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recofi6DbQulrCK1B", "n": "לאמפיזה", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2025-08", "end": "2025-11", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recomVK0kAV9IblUV", "n": "Hapoel Jerusalem - הפועל ירושלים", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2021-05", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recompBejT5Hec0WO", "n": "דקוהיט", "st": "פעיל", "sm": 0.0, "ppc": 2300.0, "gr": 0.0, "total": 2300.0, "join": "2024-01", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recor84WqJkxcELpp", "n": "אלוף", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2025-10", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recp6ZTFti2PA1JSk", "n": "עין יעל", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 2625.0, "ppc": 2625.0, "gr": 0.0, "total": 5250.0, "join": "2024-01", "end": "2025-06", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recpQNRlmVjWTnKVw", "n": "בית ספר בית חינוך", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2025-12", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recpfUjqu3YkaNrfp", "n": "איילה & ברכה תכנון ורישוי בנייה", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 500.0, "join": "2021-10", "end": "", "types": ["אחסון"]}, {"id": "recpxXp06x9PqWZ0O", "n": "קדמה בכיכר", "st": "פעיל", "sm": 1000.0, "ppc": 1118.0, "gr": 0.0, "total": 2118.0, "join": "2020-10", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recqTeQVcM16Rlhg1", "n": "קובי בנימין", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 50.0, "join": "2023-02", "end": "", "types": ["אחסון"]}, {"id": "recqbC7jlKVQwGCYH", "n": "שלומי אמסלם", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "2020-10", "end": "", "types": ["אחסון"]}, {"id": "recqna1lDCn3wYkT7", "n": "אור ויצמן", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 30.0, "join": "2022-06", "end": "", "types": ["אחסון"]}, {"id": "recqopPMgdgr3jiXV", "n": "אמי אל קליניקה - מור פנחסי", "st": "פעיל", "sm": 0.0, "ppc": 3000.0, "gr": 0.0, "total": 3000.0, "join": "2026-06", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recqreqRZfJZGcZBn", "n": "לשכת עורכי הדין", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 5000.0, "join": "2022-08", "end": "", "types": ["עבודת שוטפת"]}, {"id": "recrIgFElk7JMjA9h", "n": "המשביע", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2026-03", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recrLNojHi78F5hsd", "n": "אקדמיה לכדורגל גולאסו", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2026-06", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recrW2OuL9s48qSfg", "n": "בנית- banit", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2021-05", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recsa2YBWgFuHDOI3", "n": "טסיטו", "st": "פעיל", "sm": 0.0, "ppc": 1800.0, "gr": 0.0, "total": 1800.0, "join": "2025-07", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recssoX4ltJtmsZSA", "n": "מידבר", "st": "פעיל", "sm": 2500.0, "ppc": 2500.0, "gr": 0.0, "total": 5000.0, "join": "2026-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "rect37aSg889OySgg", "n": "חצר עין כרם", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2024-09", "end": "2025-04", "types": ["ניהול קמפיינים ppc "]}, {"id": "rect8lT4WNsuBC4n7", "n": "Barbara Bar - ברברה בר", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 296.0, "join": "2025-07", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "rect9RbC4TG7LZsAt", "n": "פיתה בשר", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 2000.0, "gr": 0.0, "total": 2000.0, "join": "2024-09", "end": "2025-06", "types": ["ניהול קמפיינים ppc "]}, {"id": "recu82FA1SaDl00QT", "n": "Artishuk - ארטישוק", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2022-05", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recuBgHcywIAydyGU", "n": "סקייליין", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2024-03", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recuNMiq37uKXRbw2", "n": "עו״ד קובי קמר", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "", "end": "", "types": ["אחסון"]}, {"id": "recuQQhhsOBomPAke", "n": "חומוס אליהו שוק", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 500.0, "ppc": 500.0, "gr": 0.0, "total": 1000.0, "join": "2020-12", "end": "2025-05", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recuSXNh5UDopkZQj", "n": "בית הצייר", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2020-12", "end": "2025-01", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recufJkzFiTBbsKKG", "n": "דנה עמר יהושוע", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 70.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "recv6Mj0ZV4vEHkzU", "n": "קולנוע אילת", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 1000.0, "join": "2023-02", "end": "", "types": ["עבודת שוטפת"]}, {"id": "recvAqIRnV5Pxaa0x", "n": "מאפה נאמן", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2025-05", "end": "2025-09", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recvBUqZGTCvSKoh0", "n": "אנקו בוקס", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2026-04", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recvQoucyff7QuvmV", "n": "גיא נחום", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 2288.0, "gr": 0.0, "total": 2288.0, "join": "2025-06", "end": "2025-12", "types": ["ניהול קמפיינים ppc "]}, {"id": "recveCs8SDopcrfeK", "n": "לה גופרה", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2025-04", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recxWqrLC8WsGkLKt", "n": "פיצה ישראל", "st": "פעיל", "sm": 1500.0, "ppc": 1500.0, "gr": 0.0, "total": 3000.0, "join": "2026-04", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "recxd9nX9QljyiqBy", "n": "סיפורי שיער", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 100.0, "join": "2025-01", "end": "", "types": ["אחסון"]}, {"id": "recxrheabmLSajxZU", "n": "מיריס", "st": "הסתיים פעילות - ע״י הלקוח ", "sm": 0.0, "ppc": 1500.0, "gr": 0.0, "total": 1500.0, "join": "2022-09", "end": "2023-10", "types": ["ניהול קמפיינים ppc "]}, {"id": "recy3QzjkfbAkSIaX", "n": "על מייוויסקי בעמ", "st": "פעיל", "sm": 0.0, "ppc": 2500.0, "gr": 0.0, "total": 2500.0, "join": "", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recyGlYBDYUR0MrUA", "n": "מוזיאון ידידי ישראל", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2026-02", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recyGpmHV0fqh9Eiq", "n": "שורש - הנדסה והתחדשות עירונית", "st": "פעיל", "sm": 0.0, "ppc": 1900.0, "gr": 0.0, "total": 1900.0, "join": "2023-06", "end": "", "types": ["ניהול קמפיינים ppc "]}, {"id": "recyHKHq0FVJOwug0", "n": "קמחי פלד שילה כהן ושות׳ -משרד עורכי דין", "st": "פעיל", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 200.0, "join": "2023-07", "end": "", "types": ["אחסון"]}, {"id": "recyIPASh0PeQpXWQ", "n": "ניו דלי", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 0.0, "gr": 0.0, "total": 0.0, "join": "2024-10", "end": "2026-01", "types": ["בוט לאינסטגרם"]}, {"id": "recyRigqtV1z5dVwz", "n": "נתנאל בריסק- בריסק הנדסה", "st": "פעיל", "sm": 1750.0, "ppc": 1750.0, "gr": 0.0, "total": 3500.0, "join": "2026-05", "end": "", "types": ["ניהול סושיאל מדיה", "ניהול קמפיינים ppc "]}, {"id": "recyUiQQ2Lkf844uv", "n": "גלגלי המושבה", "st": "פעיל", "sm": 2000.0, "ppc": 2000.0, "gr": 0.0, "total": 4000.0, "join": "2026-05", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reczRrpYGizyf3jAZ", "n": "Sea Dolphin - דולפין ים", "st": "פעיל", "sm": 1000.0, "ppc": 1000.0, "gr": 0.0, "total": 2000.0, "join": "2023-02", "end": "", "types": ["ניהול קמפיינים ppc ", "ניהול סושיאל מדיה"]}, {"id": "reczcoEEINokx0gSN", "n": "סטורג פור יו", "st": "הסתיים פעילות - ע״י החברה", "sm": 0.0, "ppc": 1400.0, "gr": 0.0, "total": 1400.0, "join": "2025-06", "end": "2026-01", "types": ["ניהול קמפיינים ppc "]}];
+const _LIVE_WORKERS = [{"id": "rec0CtMy3EpVVwRYr", "n": "יואב ספיר", "role": "מנהל|ת סושיאל מדיה ", "dept": "מנהל תיקי לקוחות סושיאל", "ppc": 0.0, "sm": 29097.0, "all": 29097.0, "st": "פעיל"}, {"id": "rec5hXo3rrtOwvHRL", "n": "אסף מנשרי", "role": "מנהל קמפיינים PPC", "dept": "מנהל תיקי לקוחות ppc", "ppc": 52600.0, "sm": 0.0, "all": 52600.0, "st": "פעיל"}, {"id": "rec8x1msNamqz2jYe", "n": "שחר נוה", "role": "מנהל קמפיינים PPC", "dept": "מנהל תיקי לקוחות ppc", "ppc": 43468.0, "sm": 0.0, "all": 43468.0, "st": "פעיל"}, {"id": "recQhgAz4zLQ9BcfD", "n": "אורי מימון", "role": "מעצבת גרפית ומנהלת מחלקת גרפיקה", "dept": "מנהל תחום אפטר אפקט ומעצב גרפי", "ppc": 0.0, "sm": 0.0, "all": 6500.0, "st": "פעיל"}, {"id": "recWwn6XRVXrPsiWL", "n": "רועי כהן", "role": "מנכ״ל מייסד ובעלים", "dept": "", "ppc": 5650.0, "sm": 0.0, "all": 5650.0, "st": "ללא שעות"}, {"id": "rechrscDCHUy4VItZ", "n": "רותם דר", "role": "מנהל|ת סושיאל מדיה ", "dept": "מנהל תיקי לקוחות סושיאל", "ppc": 0.0, "sm": 33150.0, "all": 33150.0, "st": "פעיל"}, {"id": "recrEEVYiVVO3SUJa", "n": "מירית אסלן", "role": "מנהל|ת סושיאל מדיה ", "dept": "מנהל תיקי לקוחות סושיאל", "ppc": 0.0, "sm": 3500.0, "all": 3500.0, "st": "פעיל"}, {"id": "recuv6g93r0c4z8c6", "n": "ליאור נעים", "role": "מנהל קמפיינים PPC", "dept": "מנהל תיקי לקוחות ppc", "ppc": 52200.0, "sm": 0.0, "all": 52200.0, "st": "פעיל"}, {"id": "recx2hGl5FV3ruC6g", "n": "גל בנואיש ", "role": "מנהל|ת סושיאל מדיה ", "dept": "מנהל תיקי לקוחות סושיאל", "ppc": 0.0, "sm": 40450.0, "all": 40450.0, "st": "פעיל"}];
+const _LIVE_SALS    = [{"worker": "עדי גונורצקי", "month": "יוני 2026", "hourly": 62, "bonus": 0, "net": 8500}, {"worker": "אורי מימון", "month": "יוני 2026", "hourly": 67, "bonus": 1500, "net": 11000}, {"worker": "ליאור נעים", "month": "יוני 2026", "hourly": 61, "bonus": 0, "net": 10500}, {"worker": "אסף מנשרי", "month": "יוני 2026", "hourly": 52, "bonus": 0, "net": 8200}, {"worker": "רותם דר", "month": "יוני 2026", "hourly": 57, "bonus": 0, "net": 9200}, {"worker": "גל בנואיש", "month": "יוני 2026", "hourly": 46, "bonus": 0, "net": 9308}, {"worker": "יואב ספיר", "month": "יוני 2026", "hourly": 53, "bonus": 0, "net": 8400}, {"worker": "מירי משה", "month": "יוני 2026", "hourly": 60, "bonus": 0, "net": 7000}, {"worker": "שחר נוה", "month": "יוני 2026", "hourly": 52, "bonus": 0, "net": 7500}];
+
+// normalizers (reuse existing)
+function _loadLiveData(){
+  S.data.retainers = _LIVE_RETS.map(r=>{
+    const isAct = r.st && (r.st.includes('פעיל'));
+    return {
+      id:r.id, name:(r.n||'').replace(/^ריטיינר \|\| /,'').trim(),
+      status:r.st||'', types:r.types||[],
+      sm:r.sm||0, ppc:r.ppc||0, gr:r.gr||0,
+      total:r.total||(r.sm+r.ppc+r.gr),
+      join:r.join||'', end:r.end||''
+    };
+  });
+  S.data.workers = _LIVE_WORKERS.map(w=>{
+    return {id:w.id,name:w.n||'',role:w.role||'',dept:w.dept||'',
+             ppc:w.ppc||0,sm:w.sm||0,all:w.all||0,status:w.st||''};
+  });
+  S.data.salaries = _LIVE_SALS;
+  document.getElementById('cdot').className='conn-dot live';
+  document.getElementById('clbl').textContent=`${S.data.retainers.filter(r=>r.status&&r.status.includes('פעיל')).length} רטיינרים פעילים`;
+  document.getElementById('conn-lbl').textContent='מחובר לאירטייבל ✓';
+}
+
+// ── INIT ──
+(function init(){
+  if(sessionStorage.getItem('l_auth')==='1'){
+    document.getElementById('login-screen').classList.add('gone');
+    document.getElementById('sidebar').classList.remove('closed');
+    document.getElementById('main').classList.remove('full');
+    S.loggedIn=true;
+    _loadLiveData();
+    render();
+    // Also try to fetch fresh data
+    loadAll().catch(()=>{});
+  } else {
+    render();
+    setTimeout(()=>document.getElementById('pass-input').focus(),500);
+  }
+})();
+</script>
+</body>
+</html>
