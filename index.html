@@ -364,13 +364,15 @@ async function doLogin(){
   btn.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div>';
   btn.disabled=true;
   S.loggedIn=true;
+  S.connected=true;
   sessionStorage.setItem('l_auth','1');
   // Hide login, show app
   document.getElementById('login-screen').classList.add('gone');
   document.getElementById('sidebar').classList.remove('closed');
   document.getElementById('main').classList.remove('full');
+  if(typeof _loadLiveData==='function') _loadLiveData();
   render();
-  await loadAll();
+  loadAll().catch(e=>console.log('loadAll error:',e));
 }
 
 function doLogout(){
@@ -750,7 +752,8 @@ function _loadLiveData(){
     document.getElementById('sidebar').classList.remove('closed');
     document.getElementById('main').classList.remove('full');
     S.loggedIn=true;
-    _loadLiveData();
+    S.connected=true;
+    if(typeof _loadLiveData==='function') _loadLiveData();
     render();
     // Also try to fetch fresh data
     loadAll().catch(()=>{});
